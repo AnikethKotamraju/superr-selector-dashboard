@@ -148,4 +148,4 @@ with tab2:
     )
     
     st.plotly_chart(fig_bowl, use_container_width=True)
-    st.dataframe(bowl_df.style.background_gradient(cmap='Blues', subset=['ER_Delta']), use_container_width=True)
+    st.dataframe(bowl_df.style.background_gradient(cmap='Greens', subset=['ER_Delta']), use_container_width=True)
