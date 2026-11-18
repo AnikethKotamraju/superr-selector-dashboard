@@ -69,9 +69,8 @@ with tab1:
     
     # Polar Bar Chart (Removed the invalid 'text' argument to fix the TypeError)
     fig_bat = px.bar_polar(bat_df, r="Pressure_SR", theta="Player", 
-                           color="SR_Delta", color_continuous_scale="Reds",
-                           template="plotly_dark")
-    
+                       color="SR_Delta", color_continuous_scale="Plasma", 
+                       template="plotly_dark")
     # Add the Strike Rate numbers as a clean text overlay directly on the slices
     fig_bat.add_trace(go.Scatterpolar(
         r=bat_df['Pressure_SR'] - 20, # Pulls the text slightly inward so it fits on the slice
@@ -92,8 +91,7 @@ with tab1:
     )
     
     st.plotly_chart(fig_bat, use_container_width=True)
-    st.dataframe(bat_df.sort_values('SR_Delta', ascending=False).style.background_gradient(cmap='Reds', subset=['SR_Delta']), use_container_width=True)
-
+    st.dataframe(bat_df.sort_values('SR_Delta', ascending=False).style.background_gradient(cmap='plasma', subset=['SR_Delta']), use_container_width=True)
 with tab2:
     st.subheader("Bowling Execution: The Economy Pitch Map")
     
