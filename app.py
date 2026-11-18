@@ -14,6 +14,15 @@ st.markdown("""
     /* Force charts to use full width and reduce gaps */
     .css-18e3th9 {padding-top: 1rem; padding-bottom: 1rem;}
     .block-container {padding-top: 2rem;}
+    /* Custom metric box styling */
+    .metric-box {
+        background-color: #1E212B; 
+        border-left: 4px solid #FF4B4B; 
+        padding: 15px; 
+        border-radius: 5px; 
+        margin-bottom: 20px;
+        color: #E0E0E0;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -48,6 +57,16 @@ tab1, tab2 = st.tabs(["🔥 Batters: Wagon Wheel", "🎯 Bowlers: Pitch Map Targ
 with tab1:
     st.subheader("Batting Intent: The Pressure Wagon Wheel")
     
+    # Custom Glossary Box for Batters
+    st.markdown("""
+    <div class="metric-box">
+        <b>📖 Metric Glossary:</b><br>
+        • <b>Baseline SR:</b> The batter's standard Strike Rate in normal, low-pressure match phases.<br>
+        • <b>Pressure SR:</b> The Strike Rate when the game is on the line (Required Run Rate > 10.5 or early collapse).<br>
+        • <b>SR Delta:</b> <i>(Pressure SR - Baseline SR)</i>. A positive Delta proves the batter actively elevates their scoring rate in the clutch rather than going into a shell.
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Polar Bar Chart with Numbers and tighter margins
     fig_bat = px.bar_polar(bat_df, r="Pressure_SR", theta="Player", 
                            color="SR_Delta", color_continuous_scale="Reds",
@@ -61,7 +80,7 @@ with tab1:
         height=650,
         margin=dict(t=20, b=20, l=0, r=0),
         polar=dict(radialaxis=dict(showticklabels=False, ticks='', gridcolor='#333333')),
-        coloraxis_colorbar=dict(title="SR Delta", x=0.95, y=0.5) # Pulls the heatmap line inward
+        coloraxis_colorbar=dict(title="SR Delta", x=0.95, y=0.5)
     )
     
     st.plotly_chart(fig_bat, use_container_width=True)
@@ -69,6 +88,16 @@ with tab1:
 
 with tab2:
     st.subheader("Bowling Execution: The Economy Pitch Map")
+    
+    # Custom Glossary Box for Bowlers
+    st.markdown("""
+    <div class="metric-box">
+        <b>📖 Metric Glossary:</b><br>
+        • <b>Baseline ER:</b> The bowler's standard Economy Rate (runs conceded per over) in normal phases.<br>
+        • <b>Pressure ER:</b> Economy Rate during high-leverage death overs (17-20) when defending a tight total.<br>
+        • <b>ER Delta:</b> <i>(Baseline ER - Pressure ER)</i>. A positive Delta means the bowler successfully 'squeezes' the run flow and concedes fewer relative runs under pressure.
+    </div>
+    """, unsafe_allow_html=True)
     
     # Custom Pitch Map using Shapes
     fig_bowl = go.Figure()
@@ -81,13 +110,12 @@ with tab2:
     fig_bowl.add_shape(type="line", x0=-0.5, x1=9.5, y0=8.5, y1=8.5, line=dict(color="white", width=2, dash="dash"), layer="below")
 
     # Plot the bowlers as 'cricket balls' on the pitch
-    # Y-axis is their Pressure Economy (closer to 6 is better execution)
     fig_bowl.add_trace(go.Scatter(
         x=bowl_df.index, 
         y=bowl_df['Pressure_ER'],
         mode='markers+text',
         marker=dict(
-            size=bowl_df['ER_Delta'] * 25,  # Bubble size based on how much they improved
+            size=bowl_df['ER_Delta'] * 25,  
             color='#FF4B4B', 
             line=dict(width=2, color='white')
         ),
@@ -102,12 +130,12 @@ with tab2:
         template="plotly_dark",
         height=650,
         margin=dict(t=30, b=30, l=0, r=0),
-        xaxis=dict(showgrid=False, showticklabels=False, zeroline=False), # Hide X axis completely for pure pitch look
+        xaxis=dict(showgrid=False, showticklabels=False, zeroline=False), 
         yaxis=dict(
             title="Pressure Economy Rate (Runs Conceded)", 
             showgrid=False, 
             zeroline=False, 
-            range=[9.2, 5.8] # Inverted so better economy (lower runs) is at the top of the pitch
+            range=[9.2, 5.8] 
         )
     )
     
