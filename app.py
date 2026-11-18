@@ -3,19 +3,21 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# --- PAGE CONFIG (Dark Mode) ---
-st.set_page_config(page_title="SupeRR Selector | Pressure Analytics", layout="wide", initial_sidebar_state="expanded")
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="SupeRR Selector | Pressure Analytics", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
     .main {background-color: #0E1117;}
     h1, h2, h3 {color: #FF4B4B;}
     .stDataFrame {background-color: #262730;}
+    /* Force charts to use full width and reduce gaps */
+    .css-18e3th9 {padding-top: 1rem; padding-bottom: 1rem;}
+    .block-container {padding-top: 2rem;}
     </style>
     """, unsafe_allow_html=True)
 
 st.title("🏏 SupeRR Selector: Players Under Pressure")
-st.markdown("Interactive Data Appendix for Round 1 Methodology Report")
 
 # --- LOAD DATA ---
 @st.cache_data
@@ -26,7 +28,7 @@ def load_data():
         'Baseline_SR': [71.08, 134.35, 130.96, 112.80, 139.56, 157.58, 110.82, 121.38, 130.95, 112.18],
         'Pressure_SR': [183.61, 230.77, 223.44, 193.33, 218.90, 235.07, 185.51, 195.77, 204.72, 183.51],
         'SR_Delta': [112.52, 96.42, 92.48, 80.54, 79.34, 77.49, 74.68, 74.40, 73.77, 71.32]
-    })
+    }).sort_values('SR_Delta', ascending=True)
     
     bowlers = pd.DataFrame({
         'Player': ['Adam Milne', 'Rasikh Salam', 'Kartik Tyagi', 'Haris Rauf', 'Shamar Joseph', 
@@ -34,59 +36,80 @@ def load_data():
         'Baseline_ER': [8.59, 8.97, 9.69, 8.25, 8.89, 7.39, 7.94, 7.95, 8.61, 8.36],
         'Pressure_ER': [6.95, 7.46, 8.26, 6.83, 7.96, 6.64, 7.50, 7.54, 8.28, 8.15],
         'ER_Delta': [1.64, 1.51, 1.43, 1.42, 0.93, 0.75, 0.44, 0.40, 0.34, 0.21]
-    })
-    return batters.sort_values('SR_Delta', ascending=True), bowlers.sort_values('ER_Delta', ascending=True)
+    }).sort_values('ER_Delta', ascending=False).reset_index(drop=True)
+    
+    return batters, bowlers
 
 bat_df, bowl_df = load_data()
 
 # --- DASHBOARD TABS ---
-tab1, tab2 = st.tabs(["🔥 Batters: Radial Wagon Wheel", "🎯 Bowlers: Economy Squeeze"])
+tab1, tab2 = st.tabs(["🔥 Batters: Wagon Wheel", "🎯 Bowlers: Pitch Map Target"])
 
 with tab1:
-    st.header("Batting Intent: The Pressure Wagon Wheel")
-    st.write("A 360-degree view of boundary intent. Slice length equals Strike Rate under pressure; color intensity indicates the Delta jump from their baseline.")
+    st.subheader("Batting Intent: The Pressure Wagon Wheel")
     
-    # Polar Bar Chart (Replaces standard X/Y scatter)
+    # Polar Bar Chart with Numbers and tighter margins
     fig_bat = px.bar_polar(bat_df, r="Pressure_SR", theta="Player", 
                            color="SR_Delta", color_continuous_scale="Reds",
-                           template="plotly_dark")
+                           text="Pressure_SR", template="plotly_dark")
     
+    # Format numbers to be clean integers on the wheel
+    fig_bat.update_traces(texttemplate='%{text:.0f}', textposition='middle')
+    
+    # Reduce margins massively to close the gap to the legend
     fig_bat.update_layout(
-        height=600,
-        polar=dict(radialaxis=dict(showticklabels=True, ticks='', gridcolor='#333333')),
-        margin=dict(t=40, b=40, l=40, r=40)
+        height=650,
+        margin=dict(t=20, b=20, l=0, r=0),
+        polar=dict(radialaxis=dict(showticklabels=False, ticks='', gridcolor='#333333')),
+        coloraxis_colorbar=dict(title="SR Delta", x=0.95, y=0.5) # Pulls the heatmap line inward
     )
     
     st.plotly_chart(fig_bat, use_container_width=True)
-    st.dataframe(bat_df.sort_values('SR_Delta', ascending=False).style.background_gradient(cmap='Reds', subset=['SR_Delta']))
+    st.dataframe(bat_df.sort_values('SR_Delta', ascending=False).style.background_gradient(cmap='Reds', subset=['SR_Delta']), use_container_width=True)
 
 with tab2:
-    st.header("Bowling Execution: The Economy Squeeze")
-    st.write("Gray dot = Baseline Economy. Blue dot = Pressure Economy. The connecting line visually represents how much a bowler 'squeezes' the run flow under extreme pressure.")
+    st.subheader("Bowling Execution: The Economy Pitch Map")
     
-    # Dumbbell Squeeze Plot (Replaces standard bar chart)
+    # Custom Pitch Map using Shapes
     fig_bowl = go.Figure()
+
+    # Draw the green cricket pitch
+    fig_bowl.add_shape(type="rect", x0=-0.5, x1=9.5, y0=6.0, y1=9.0, fillcolor="#4a7c59", line_color="#ffffff", line_width=2, layer="below")
     
-    for i, row in bowl_df.iterrows():
-        fig_bowl.add_trace(go.Scatter(
-            x=[row['Baseline_ER'], row['Pressure_ER']], 
-            y=[row['Player'], row['Player']],
-            mode='lines+markers',
-            marker=dict(color=['#555555', '#00b4d8'], size=14, line=dict(width=2, color='white')),
-            line=dict(color='#333333', width=4),
-            showlegend=False,
-            hoverinfo='text',
-            hovertext=f"{row['Player']}<br>Baseline: {row['Baseline_ER']}<br>Pressure: {row['Pressure_ER']}"
-        ))
+    # Draw popping crease and bowling crease lines for aesthetics
+    fig_bowl.add_shape(type="line", x0=-0.5, x1=9.5, y0=6.5, y1=6.5, line=dict(color="white", width=2, dash="dash"), layer="below")
+    fig_bowl.add_shape(type="line", x0=-0.5, x1=9.5, y0=8.5, y1=8.5, line=dict(color="white", width=2, dash="dash"), layer="below")
+
+    # Plot the bowlers as 'cricket balls' on the pitch
+    # Y-axis is their Pressure Economy (closer to 6 is better execution)
+    fig_bowl.add_trace(go.Scatter(
+        x=bowl_df.index, 
+        y=bowl_df['Pressure_ER'],
+        mode='markers+text',
+        marker=dict(
+            size=bowl_df['ER_Delta'] * 25,  # Bubble size based on how much they improved
+            color='#FF4B4B', 
+            line=dict(width=2, color='white')
+        ),
+        text=bowl_df['Player'] + "<br>" + bowl_df['Pressure_ER'].astype(str),
+        textposition="top center",
+        textfont=dict(color="white", size=12),
+        hoverinfo='text',
+        hovertext=f"Baseline ER: " + bowl_df['Baseline_ER'].astype(str)
+    ))
 
     fig_bowl.update_layout(
         template="plotly_dark",
-        height=600,
-        xaxis_title="Economy Rate (Runs per Over)",
-        yaxis_title="",
-        xaxis=dict(gridcolor='#333333', zeroline=False),
-        yaxis=dict(gridcolor='#333333')
+        height=650,
+        margin=dict(t=30, b=30, l=0, r=0),
+        xaxis=dict(showgrid=False, showticklabels=False, zeroline=False), # Hide X axis completely for pure pitch look
+        yaxis=dict(
+            title="Pressure Economy Rate (Runs Conceded)", 
+            showgrid=False, 
+            zeroline=False, 
+            range=[9.2, 5.8] # Inverted so better economy (lower runs) is at the top of the pitch
+        )
     )
     
     st.plotly_chart(fig_bowl, use_container_width=True)
-    st.dataframe(bowl_df.sort_values('ER_Delta', ascending=False).style.background_gradient(cmap='Blues', subset=['ER_Delta']))
+    st.dataframe(bowl_df.style.background_gradient(cmap='Blues', subset=['ER_Delta']), use_container_width=True)
