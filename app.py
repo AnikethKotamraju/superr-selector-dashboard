@@ -67,13 +67,21 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
     
-    # Polar Bar Chart with Numbers and tighter margins
+    # Polar Bar Chart (Removed the invalid 'text' argument to fix the TypeError)
     fig_bat = px.bar_polar(bat_df, r="Pressure_SR", theta="Player", 
                            color="SR_Delta", color_continuous_scale="Reds",
-                           text="Pressure_SR", template="plotly_dark")
+                           template="plotly_dark")
     
-    # Format numbers to be clean integers on the wheel
-    fig_bat.update_traces(texttemplate='%{text:.0f}', textposition='middle')
+    # Add the Strike Rate numbers as a clean text overlay directly on the slices
+    fig_bat.add_trace(go.Scatterpolar(
+        r=bat_df['Pressure_SR'] - 20, # Pulls the text slightly inward so it fits on the slice
+        theta=bat_df['Player'],
+        mode='text',
+        text=bat_df['Pressure_SR'].astype(int).astype(str),
+        textfont=dict(color='white', size=14, family='Arial Black'),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
     
     # Reduce margins massively to close the gap to the legend
     fig_bat.update_layout(
