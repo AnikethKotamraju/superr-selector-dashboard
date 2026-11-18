@@ -78,7 +78,7 @@ with tab1:
         theta=bat_df['Player'],
         mode='text',
         text=bat_df['Pressure_SR'].astype(int).astype(str),
-        textfont=dict(color='white', size=14, family='Arial Black'),
+        textfont=dict(color='black', size=14, family='Arial Black'),
         showlegend=False,
         hoverinfo='skip'
     ))
